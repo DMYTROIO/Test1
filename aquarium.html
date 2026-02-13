@@ -162,6 +162,27 @@
         #restart.show {
             display: block;
         }
+
+        /* Audio control */
+        #audioToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        #audioToggle:hover {
+            background: white;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -183,7 +204,15 @@
 
         <!-- Restart button -->
         <button id="restart">Restart</button>
+
+        <!-- Audio toggle -->
+        <button id="audioToggle" title="Toggle sound">🔊</button>
     </div>
+
+    <!-- Hidden audio element -->
+    <audio id="backgroundAudio" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_d1718ab41b.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // Fish element and properties
@@ -192,6 +221,10 @@
         const aquarium = document.getElementById('aquarium');
         const message = document.getElementById('message');
         const restartBtn = document.getElementById('restart');
+        const audioToggle = document.getElementById('audioToggle');
+        const backgroundAudio = document.getElementById('backgroundAudio');
+        
+        let isAudioPlaying = false;
 
         let fishX = Math.random() * (window.innerWidth - 100);
         let fishY = Math.random() * (window.innerHeight - 200) + 50;
@@ -420,6 +453,31 @@
             fish2X = Math.min(fish2X, window.innerWidth - 80);
             fish2Y = Math.min(fish2Y, window.innerHeight - 150);
         });
+
+        // Audio control
+        audioToggle.addEventListener('click', function() {
+            if (isAudioPlaying) {
+                backgroundAudio.pause();
+                audioToggle.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                backgroundAudio.play().catch(err => console.log('Audio play failed:', err));
+                audioToggle.textContent = '🔊';
+                isAudioPlaying = true;
+            }
+        });
+
+        // Auto-start audio on first user interaction
+        let audioStarted = false;
+        function startAudio() {
+            if (!audioStarted) {
+                backgroundAudio.play().catch(err => console.log('Audio autoplay blocked'));
+                isAudioPlaying = true;
+                audioStarted = true;
+            }
+        }
+        
+        document.addEventListener('click', startAudio, { once: true });
     </script>
 </body>
 </html>
