@@ -209,9 +209,10 @@
         <button id="audioToggle" title="Toggle sound">🔊</button>
     </div>
 
-    <!-- Hidden audio element -->
-    <audio id="backgroundAudio" loop>
-        <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_d1718ab41b.mp3" type="audio/mpeg">
+    <!-- Bird singing audio - using Free Music Archive URL -->
+    <audio id="birdAudio" loop preload="auto">
+        <!-- Alternative sources in case one fails -->
+        <source src="https://bigsoundbank.com/UPLOAD/mp3/0999.mp3" type="audio/mpeg">
     </audio>
 
     <script>
@@ -222,7 +223,7 @@
         const message = document.getElementById('message');
         const restartBtn = document.getElementById('restart');
         const audioToggle = document.getElementById('audioToggle');
-        const backgroundAudio = document.getElementById('backgroundAudio');
+        const birdAudio = document.getElementById('birdAudio');
         
         let isAudioPlaying = false;
 
@@ -454,30 +455,43 @@
             fish2Y = Math.min(fish2Y, window.innerHeight - 150);
         });
 
-        // Audio control
+        // Audio control - Simple HTML5 audio
         audioToggle.addEventListener('click', function() {
             if (isAudioPlaying) {
-                backgroundAudio.pause();
+                birdAudio.pause();
                 audioToggle.textContent = '🔇';
                 isAudioPlaying = false;
             } else {
-                backgroundAudio.play().catch(err => console.log('Audio play failed:', err));
+                birdAudio.play().catch(err => console.log('Audio play failed:', err));
                 audioToggle.textContent = '🔊';
                 isAudioPlaying = true;
             }
         });
 
-        // Auto-start audio on first user interaction
+        // Try to auto-start audio on page load, fallback to first click due to browser restrictions
         let audioStarted = false;
-        function startAudio() {
+        
+        function initAudio() {
             if (!audioStarted) {
-                backgroundAudio.play().catch(err => console.log('Audio autoplay blocked'));
-                isAudioPlaying = true;
-                audioStarted = true;
+                birdAudio.play().then(() => {
+                    isAudioPlaying = true;
+                    audioToggle.textContent = '🔊';
+                    audioStarted = true;
+                }).catch(err => {
+                    console.log('Audio autoplay blocked, waiting for user interaction');
+                });
             }
         }
         
-        document.addEventListener('click', startAudio, { once: true });
+        // Try on page load
+        window.addEventListener('load', initAudio);
+        
+        // Fallback: start on first user interaction (required by most browsers)
+        document.addEventListener('click', function autoStartAudio() {
+            if (!audioStarted) {
+                initAudio();
+            }
+        }, { once: false });
     </script>
 </body>
 </html>
