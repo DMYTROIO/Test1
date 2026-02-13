@@ -26,6 +26,16 @@
                 #5a9fd4 100%);
             position: relative;
             overflow: hidden;
+            transition: background 2s ease;
+        }
+
+        #aquarium.valentine {
+            background: linear-gradient(135deg, 
+                #ff0844 0%, 
+                #ff477e 25%, 
+                #ff9a9e 50%, 
+                #fecfef 75%, 
+                #ffdde1 100%);
         }
 
         /* Bubbles decoration */
@@ -35,6 +45,11 @@
             background: rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             animation: rise linear infinite;
+            transition: opacity 1s ease;
+        }
+
+        .bubble.hidden {
+            opacity: 0;
         }
 
         @keyframes rise {
@@ -52,6 +67,11 @@
             height: 80px;
             background: linear-gradient(to bottom, #d4a76a, #c49a6b);
             box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+            transition: opacity 1s ease;
+        }
+
+        #sand.hidden {
+            opacity: 0;
         }
 
         /* Seaweed decoration */
@@ -64,6 +84,11 @@
             border-radius: 15px;
             animation: sway 3s ease-in-out infinite;
             transform-origin: bottom center;
+            transition: opacity 1s ease;
+        }
+
+        .seaweed.hidden {
+            opacity: 0;
         }
 
         @keyframes sway {
@@ -75,7 +100,7 @@
         #fish, #fish2 {
             position: absolute;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 1s ease;
             font-size: 500px;
             filter: hue-rotate(50deg) saturate(3) brightness(1.5) contrast(1.2);
             color: gold;
@@ -85,6 +110,11 @@
 
         #fish:hover, #fish2:hover {
             transform: scale(1.1);
+        }
+
+        #fish.hidden, #fish2.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         /* Message overlay */
@@ -155,6 +185,33 @@
             background: white;
             transform: scale(1.05);
         }
+
+        /* Floating hearts */
+        .heart {
+            position: absolute;
+            font-size: 80px;
+            opacity: 0;
+            animation: floatHeart 4s ease-in-out infinite;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                bottom: -100px;
+                opacity: 0;
+                transform: translateX(0) rotate(0deg);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                bottom: 110vh;
+                opacity: 0;
+                transform: translateX(50px) rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -184,6 +241,10 @@
         <source src="https://bigsoundbank.com/UPLOAD/mp3/0999.mp3" type="audio/mpeg">
     </audio>
 
+    <audio id="romanticAudio" loop preload="auto">
+        <source src="romantic.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
         // Fish element and properties
         const fish = document.getElementById('fish');
@@ -192,9 +253,12 @@
         const message = document.getElementById('message');
         const audioToggle = document.getElementById('audioToggle');
         const birdAudio = document.getElementById('birdAudio');
+        const romanticAudio = document.getElementById('romanticAudio');
         
         let isAudioPlaying = false;
         let messageTimeout = null;
+        let valentineTransformed = false;
+        let currentAudio = birdAudio;
 
         let fishX = Math.random() * (window.innerWidth - 100);
         let fishY = Math.random() * (window.innerHeight - 200) + 50;
@@ -351,6 +415,60 @@
         swimFish();
         swimFish2();
 
+        // Transform to Valentine's theme
+        function transformToValentine() {
+            if (valentineTransformed) return;
+            valentineTransformed = true;
+            
+            // Switch audio from bird to romantic
+            if (isAudioPlaying) {
+                birdAudio.pause();
+                romanticAudio.play().catch(err => console.log('Romantic audio play failed:', err));
+                currentAudio = romanticAudio;
+            }
+            
+            // Stop fish swimming
+            isSwimming = false;
+            isSwimming2 = false;
+            cancelAnimationFrame(animationId);
+            cancelAnimationFrame(animationId2);
+            
+            // Hide aquarium elements
+            fish.classList.add('hidden');
+            fish2.classList.add('hidden');
+            document.getElementById('sand').classList.add('hidden');
+            document.querySelectorAll('.seaweed').forEach(sw => sw.classList.add('hidden'));
+            document.querySelectorAll('.bubble').forEach(b => b.classList.add('hidden'));
+            
+            // Change background to Valentine's theme
+            aquarium.classList.add('valentine');
+            
+            // Create floating hearts
+            function createHeart() {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = ['❤️', '💕', '💖', '💗', '💝'][Math.floor(Math.random() * 5)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDelay = Math.random() * 2 + 's';
+                heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+                aquarium.appendChild(heart);
+                
+                setTimeout(() => heart.remove(), 7000);
+            }
+            
+            // Create hearts continuously
+            for (let i = 0; i < 10; i++) {
+                setTimeout(createHeart, i * 300);
+            }
+            setInterval(createHeart, 800);
+            
+            // Show new message after transformation completes
+            setTimeout(() => {
+                message.textContent = 'Now your turn';
+                message.classList.add('show');
+            }, 2000);
+        }
+
         // Click handler for fish 1
         fish.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -372,6 +490,9 @@
             messageTimeout = setTimeout(() => {
                 message.classList.remove('show');
                 messageTimeout = null;
+                
+                // Transform to Valentine's theme after message hides
+                setTimeout(transformToValentine, 500);
             }, 5000);
         });
 
@@ -396,6 +517,9 @@
             messageTimeout = setTimeout(() => {
                 message.classList.remove('show');
                 messageTimeout = null;
+                
+                // Transform to Valentine's theme after message hides
+                setTimeout(transformToValentine, 500);
             }, 5000);
         });
 
@@ -410,11 +534,11 @@
         // Audio control - Simple HTML5 audio
         audioToggle.addEventListener('click', function() {
             if (isAudioPlaying) {
-                birdAudio.pause();
+                currentAudio.pause();
                 audioToggle.textContent = '🔇';
                 isAudioPlaying = false;
             } else {
-                birdAudio.play().catch(err => console.log('Audio play failed:', err));
+                currentAudio.play().catch(err => console.log('Audio play failed:', err));
                 audioToggle.textContent = '🔊';
                 isAudioPlaying = true;
             }
