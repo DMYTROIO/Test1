@@ -16,6 +16,44 @@
             font-family: Arial, sans-serif;
         }
 
+        /* Intro screen */
+        #introScreen {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff0000 0%, #8b0000 50%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #introScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #clickMeBtn {
+            padding: 30px 60px;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border: 5px solid white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #clickMeBtn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7);
+        }
+
         #aquarium {
             width: 100vw;
             height: 100vh;
@@ -212,9 +250,31 @@
                 transform: translateX(50px) rotate(360deg);
             }
         }
+
+        /* Swimming hearts (like fish) */
+        .swimming-heart {
+            position: absolute;
+            font-size: 600px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            opacity: 0;
+        }
+
+        .swimming-heart.visible {
+            opacity: 1;
+        }
+
+        .swimming-heart:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
+    <!-- Intro screen -->
+    <div id="introScreen">
+        <button id="clickMeBtn">Click me and enable the sound</button>
+    </div>
+
     <div id="aquarium">
         <div id="sand"></div>
         
@@ -227,6 +287,10 @@
         <!-- Fish -->
         <div id="fish">🐟</div>
         <div id="fish2">🐡</div>
+
+        <!-- Swimming Hearts (appear after transformation) -->
+        <div id="heart1" class="swimming-heart">❤️</div>
+        <div id="heart2" class="swimming-heart">💕</div>
 
         <!-- Message -->
         <div id="message">Lucky got a Valentine's fish</div>
@@ -246,9 +310,23 @@
     </audio>
 
     <script>
+        // Intro screen handler
+        const introScreen = document.getElementById('introScreen');
+        const clickMeBtn = document.getElementById('clickMeBtn');
+        
+        clickMeBtn.addEventListener('click', function() {
+            introScreen.classList.add('hidden');
+            // Start audio after intro
+            setTimeout(() => {
+                initAudio();
+            }, 1000);
+        });
+
         // Fish element and properties
         const fish = document.getElementById('fish');
         const fish2 = document.getElementById('fish2');
+        const heart1 = document.getElementById('heart1');
+        const heart2 = document.getElementById('heart2');
         const aquarium = document.getElementById('aquarium');
         const message = document.getElementById('message');
         const audioToggle = document.getElementById('audioToggle');
@@ -273,6 +351,21 @@
         let velocity2Y = (Math.random() - 0.5) * 12;
         let isSwimming2 = true;
         let animationId2;
+
+        // Heart swimming properties
+        let heart1X = window.innerWidth / 2 - 300; // Center left
+        let heart1Y = window.innerHeight / 2 - 300; // Center
+        let heartVelocity1X = (Math.random() - 0.5) * 8;
+        let heartVelocity1Y = (Math.random() - 0.5) * 8;
+        let isHeart1Swimming = false;
+        let heart1AnimationId;
+
+        let heart2X = window.innerWidth / 2; // Center right
+        let heart2Y = window.innerHeight / 2 - 300; // Center
+        let heartVelocity2X = (Math.random() - 0.5) * 8;
+        let heartVelocity2Y = (Math.random() - 0.5) * 8;
+        let isHeart2Swimming = false;
+        let heart2AnimationId;
 
         // Initialize fish positions
         fish.style.left = fishX + 'px';
@@ -415,6 +508,90 @@
         swimFish();
         swimFish2();
 
+        // Heart 1 swimming animation
+        function swimHeart1() {
+            if (!isHeart1Swimming) return;
+
+            heart1X += heartVelocity1X;
+            heart1Y += heartVelocity1Y;
+
+            const heartSize = 600;
+            const visiblePortion = heartSize * 0.3;
+            const minX = -(heartSize - visiblePortion);
+            const maxX = window.innerWidth - visiblePortion;
+            const minY = -(heartSize - visiblePortion);
+            const maxY = window.innerHeight - visiblePortion;
+
+            if (heart1X <= minX || heart1X >= maxX) {
+                heartVelocity1X *= -1;
+                heart1X = Math.max(minX, Math.min(heart1X, maxX));
+            }
+
+            if (heart1Y <= minY || heart1Y >= maxY) {
+                heartVelocity1Y *= -1;
+                heart1Y = Math.max(minY, Math.min(heart1Y, maxY));
+            }
+
+            if (Math.random() < 0.02) {
+                heartVelocity1X += (Math.random() - 0.5) * 3;
+                heartVelocity1Y += (Math.random() - 0.5) * 3;
+
+                const speed = Math.sqrt(heartVelocity1X * heartVelocity1X + heartVelocity1Y * heartVelocity1Y);
+                const maxSpeed = 10;
+                if (speed > maxSpeed) {
+                    heartVelocity1X = (heartVelocity1X / speed) * maxSpeed;
+                    heartVelocity1Y = (heartVelocity1Y / speed) * maxSpeed;
+                }
+            }
+
+            heart1.style.left = heart1X + 'px';
+            heart1.style.top = heart1Y + 'px';
+
+            heart1AnimationId = requestAnimationFrame(swimHeart1);
+        }
+
+        // Heart 2 swimming animation
+        function swimHeart2() {
+            if (!isHeart2Swimming) return;
+
+            heart2X += heartVelocity2X;
+            heart2Y += heartVelocity2Y;
+
+            const heartSize = 600;
+            const visiblePortion = heartSize * 0.3;
+            const minX = -(heartSize - visiblePortion);
+            const maxX = window.innerWidth - visiblePortion;
+            const minY = -(heartSize - visiblePortion);
+            const maxY = window.innerHeight - visiblePortion;
+
+            if (heart2X <= minX || heart2X >= maxX) {
+                heartVelocity2X *= -1;
+                heart2X = Math.max(minX, Math.min(heart2X, maxX));
+            }
+
+            if (heart2Y <= minY || heart2Y >= maxY) {
+                heartVelocity2Y *= -1;
+                heart2Y = Math.max(minY, Math.min(heart2Y, maxY));
+            }
+
+            if (Math.random() < 0.02) {
+                heartVelocity2X += (Math.random() - 0.5) * 3;
+                heartVelocity2Y += (Math.random() - 0.5) * 3;
+
+                const speed = Math.sqrt(heartVelocity2X * heartVelocity2X + heartVelocity2Y * heartVelocity2Y);
+                const maxSpeed = 10;
+                if (speed > maxSpeed) {
+                    heartVelocity2X = (heartVelocity2X / speed) * maxSpeed;
+                    heartVelocity2Y = (heartVelocity2Y / speed) * maxSpeed;
+                }
+            }
+
+            heart2.style.left = heart2X + 'px';
+            heart2.style.top = heart2Y + 'px';
+
+            heart2AnimationId = requestAnimationFrame(swimHeart2);
+        }
+
         // Transform to Valentine's theme
         function transformToValentine() {
             if (valentineTransformed) return;
@@ -466,7 +643,28 @@
             setTimeout(() => {
                 message.textContent = 'Now your turn';
                 message.classList.add('show');
-            }, 2000);
+                
+                // Hide message after 3 seconds and show swimming hearts
+                setTimeout(() => {
+                    message.classList.remove('show');
+                    
+                    // Show and start swimming hearts
+                    setTimeout(() => {
+                        heart1.style.left = heart1X + 'px';
+                        heart1.style.top = heart1Y + 'px';
+                        heart2.style.left = heart2X + 'px';
+                        heart2.style.top = heart2Y + 'px';
+                        
+                        heart1.classList.add('visible');
+                        heart2.classList.add('visible');
+                        
+                        isHeart1Swimming = true;
+                        isHeart2Swimming = true;
+                        swimHeart1();
+                        swimHeart2();
+                    }, 500);
+                }, 2000);
+            }, 1000);
         }
 
         // Click handler for fish 1
@@ -521,6 +719,832 @@
                 // Transform to Valentine's theme after message hides
                 setTimeout(transformToValentine, 500);
             }, 5000);
+        });
+
+        // Click handler for heart 1
+        heart1.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Don't show message if already displayed
+            if (message.classList.contains('show')) {
+                return;
+            }
+            
+            message.textContent = 'Be my Valentine';
+            message.classList.add('show');
+            // Message stays permanently - no auto-hide
+        });
+
+        // Click handler for heart 2
+        heart2.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Don't show message if already displayed
+            if (message.classList.contains('show')) {
+                return;
+            }
+            
+            message.textContent = 'Be my Valentine';
+            message.classList.add('show');
+            // Message stays permanently - no auto-hide
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            fishX = Math.min(fishX, window.innerWidth - 80);
+            fishY = Math.min(fishY, window.innerHeight - 150);
+            fish2X = Math.min(fish2X, window.innerWidth - 80);
+            fish2Y = Math.min(fish2Y, window.innerHeight - 150);
+        });
+
+        // Audio control - Simple HTML5 audio
+        audioToggle.addEventListener('click', function() {
+            if (isAudioPlaying) {
+                currentAudio.pause();
+                audioToggle.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                currentAudio.play().catch(err => console.log('Audio play failed:', err));
+                audioToggle.textContent = '🔊';
+                isAudioPlaying = true;
+            }
+        });
+
+        // Try to auto-start audio on page load, fallback to first click due to browser restrictions
+        let audioStarted = false;
+        
+        function initAudio() {
+            if (!audioStarted) {
+                birdAudio.play().then(() => {
+                    isAudioPlaying = true;
+                    audioToggle.textContent = '🔊';
+                    audioStarted = true;
+                }).catch(err => {
+                    console.log('Audio autoplay blocked, waiting for user interaction');
+                });
+            }
+        }
+        
+        // Try on page load
+        window.addEventListener('load', initAudio);
+        
+        // Fallback: start on first user interaction (required by most browsers)
+        document.addEventListener('click', function autoStartAudio() {
+            if (!audioStarted) {
+                initAudio();
+            }
+        }, { once: false });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquarium - Swim Fish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Intro screen */
+        #introScreen {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff0000 0%, #8b0000 50%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #introScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #clickMeBtn {
+            padding: 30px 60px;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border: 5px solid white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #clickMeBtn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.7);
+        }
+
+        #aquarium {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, 
+                #1e3a5f 0%, 
+                #2a5a8c 30%, 
+                #3d7ab8 60%, 
+                #5a9fd4 100%);
+            position: relative;
+            overflow: hidden;
+            transition: background 2s ease;
+        }
+
+        #aquarium.valentine {
+            background: linear-gradient(135deg, 
+                #ff0844 0%, 
+                #ff477e 25%, 
+                #ff9a9e 50%, 
+                #fecfef 75%, 
+                #ffdde1 100%);
+        }
+
+        /* Bubbles decoration */
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: rise linear infinite;
+            transition: opacity 1s ease;
+        }
+
+        .bubble.hidden {
+            opacity: 0;
+        }
+
+        @keyframes rise {
+            to {
+                bottom: 110vh;
+                opacity: 0;
+            }
+        }
+
+        /* Sand at the bottom */
+        #sand {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, #d4a76a, #c49a6b);
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+            transition: opacity 1s ease;
+        }
+
+        #sand.hidden {
+            opacity: 0;
+        }
+
+        /* Seaweed decoration */
+        .seaweed {
+            position: absolute;
+            bottom: 80px;
+            width: 30px;
+            height: 120px;
+            background: linear-gradient(to right, #2d5016, #3a6b1f);
+            border-radius: 15px;
+            animation: sway 3s ease-in-out infinite;
+            transform-origin: bottom center;
+            transition: opacity 1s ease;
+        }
+
+        .seaweed.hidden {
+            opacity: 0;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* Fish */
+        #fish, #fish2 {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.3s ease, opacity 1s ease;
+            font-size: 500px;
+            filter: hue-rotate(50deg) saturate(3) brightness(1.5) contrast(1.2);
+            color: gold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            user-select: none;
+        }
+
+        #fish:hover, #fish2:hover {
+            transform: scale(1.1);
+        }
+
+        #fish.hidden, #fish2.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Message overlay */
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #ff1744, #f50057, #ff4081);
+            padding: 60px 80px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(255, 23, 68, 0.6), 
+                        0 0 40px rgba(255, 64, 129, 0.4),
+                        inset 0 -3px 20px rgba(255, 255, 255, 0.3);
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #message::before {
+            content: '💝';
+            position: absolute;
+            top: -30px;
+            left: 20px;
+            font-size: 60px;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        #message::after {
+            content: '❤️';
+            position: absolute;
+            bottom: -30px;
+            right: 30px;
+            font-size: 60px;
+            animation: float 2s ease-in-out infinite 1s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        #message.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Audio control */
+        #audioToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        #audioToggle:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+
+        /* Floating hearts */
+        .heart {
+            position: absolute;
+            font-size: 80px;
+            opacity: 0;
+            animation: floatHeart 4s ease-in-out infinite;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                bottom: -100px;
+                opacity: 0;
+                transform: translateX(0) rotate(0deg);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                bottom: 110vh;
+                opacity: 0;
+                transform: translateX(50px) rotate(360deg);
+            }
+        }
+
+        /* Swimming hearts (like fish) */
+        .swimming-heart {
+            position: absolute;
+            font-size: 600px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            opacity: 0;
+        }
+
+        .swimming-heart.visible {
+            opacity: 1;
+        }
+
+        .swimming-heart:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Intro screen -->
+    <div id="introScreen">
+        <button id="clickMeBtn">Click me and enable the sound</button>
+    </div>
+
+    <div id="aquarium">
+        <div id="sand"></div>
+        
+        <!-- Seaweed decoration -->
+        <div class="seaweed" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="seaweed" style="left: 25%; animation-delay: 1s; height: 100px;"></div>
+        <div class="seaweed" style="left: 70%; animation-delay: 0.5s;"></div>
+        <div class="seaweed" style="left: 85%; animation-delay: 1.5s; height: 90px;"></div>
+
+        <!-- Fish -->
+        <div id="fish">🐟</div>
+        <div id="fish2">🐡</div>
+
+        <!-- Swimming Hearts (appear after transformation) -->
+        <div id="heart1" class="swimming-heart">❤️</div>
+        <div id="heart2" class="swimming-heart">💕</div>
+
+        <!-- Message -->
+        <div id="message">Lucky got a Valentine's fish</div>
+
+        <!-- Audio toggle -->
+        <button id="audioToggle" title="Toggle sound">🔊</button>
+    </div>
+
+    <!-- Bird singing audio - using Free Music Archive URL -->
+    <audio id="birdAudio" loop preload="auto">
+        <!-- Alternative sources in case one fails -->
+        <source src="https://bigsoundbank.com/UPLOAD/mp3/0999.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="romanticAudio" loop preload="auto">
+        <source src="romantic.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Intro screen handler
+        const introScreen = document.getElementById('introScreen');
+        const clickMeBtn = document.getElementById('clickMeBtn');
+        
+        clickMeBtn.addEventListener('click', function() {
+            introScreen.classList.add('hidden');
+            // Start audio after intro
+            setTimeout(() => {
+                initAudio();
+            }, 1000);
+        });
+
+        // Fish element and properties
+        const fish = document.getElementById('fish');
+        const fish2 = document.getElementById('fish2');
+        const heart1 = document.getElementById('heart1');
+        const heart2 = document.getElementById('heart2');
+        const aquarium = document.getElementById('aquarium');
+        const message = document.getElementById('message');
+        const audioToggle = document.getElementById('audioToggle');
+        const birdAudio = document.getElementById('birdAudio');
+        const romanticAudio = document.getElementById('romanticAudio');
+        
+        let isAudioPlaying = false;
+        let messageTimeout = null;
+        let valentineTransformed = false;
+        let currentAudio = birdAudio;
+
+        let fishX = Math.random() * (window.innerWidth - 100);
+        let fishY = Math.random() * (window.innerHeight - 200) + 50;
+        let velocityX = (Math.random() - 0.5) * 12;
+        let velocityY = (Math.random() - 0.5) * 12;
+        let isSwimming = true;
+        let animationId;
+
+        let fish2X = Math.random() * (window.innerWidth - 100);
+        let fish2Y = Math.random() * (window.innerHeight - 200) + 50;
+        let velocity2X = (Math.random() - 0.5) * 12;
+        let velocity2Y = (Math.random() - 0.5) * 12;
+        let isSwimming2 = true;
+        let animationId2;
+
+        // Heart swimming properties
+        let heart1X = window.innerWidth / 2 - 300; // Center left
+        let heart1Y = window.innerHeight / 2 - 300; // Center
+        let heartVelocity1X = (Math.random() - 0.5) * 8;
+        let heartVelocity1Y = (Math.random() - 0.5) * 8;
+        let isHeart1Swimming = false;
+        let heart1AnimationId;
+
+        let heart2X = window.innerWidth / 2; // Center right
+        let heart2Y = window.innerHeight / 2 - 300; // Center
+        let heartVelocity2X = (Math.random() - 0.5) * 8;
+        let heartVelocity2Y = (Math.random() - 0.5) * 8;
+        let isHeart2Swimming = false;
+        let heart2AnimationId;
+
+        // Initialize fish positions
+        fish.style.left = fishX + 'px';
+        fish.style.top = fishY + 'px';
+        fish2.style.left = fish2X + 'px';
+        fish2.style.top = fish2Y + 'px';
+
+        // Create bubbles
+        function createBubbles() {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    const size = Math.random() * 30 + 10;
+                    bubble.style.width = size + 'px';
+                    bubble.style.height = size + 'px';
+                    bubble.style.left = Math.random() * 100 + '%';
+                    bubble.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                    bubble.style.animationDelay = Math.random() * 2 + 's';
+                    aquarium.appendChild(bubble);
+
+                    // Remove bubble after animation
+                    setTimeout(() => bubble.remove(), 12000);
+                }, i * 500);
+            }
+        }
+
+        // Continuous bubble creation
+        createBubbles();
+        setInterval(createBubbles, 7000);
+
+        // Fish swimming animation
+        function swimFish() {
+            if (!isSwimming) return;
+
+            // Update position
+            fishX += velocityX;
+            fishY += velocityY;
+
+            // Bounce off walls (allow 70% hiding, keep 30% visible)
+            const fishSize = 500;
+            const visiblePortion = fishSize * 0.3; // 30% must remain visible
+            const minX = -(fishSize - visiblePortion);
+            const maxX = window.innerWidth - visiblePortion;
+            const minY = -(fishSize - visiblePortion);
+            const maxY = window.innerHeight - 80 - visiblePortion; // Account for sand
+
+            if (fishX <= minX || fishX >= maxX) {
+                velocityX *= -1;
+                fishX = Math.max(minX, Math.min(fishX, maxX));
+            }
+
+            if (fishY <= minY || fishY >= maxY) {
+                velocityY *= -1;
+                fishY = Math.max(minY, Math.min(fishY, maxY));
+            }
+
+            // Random direction changes
+            if (Math.random() < 0.02) {
+                velocityX += (Math.random() - 0.5) * 4;
+                velocityY += (Math.random() - 0.5) * 4;
+
+                // Limit speed
+                const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                const maxSpeed = 15;
+                if (speed > maxSpeed) {
+                    velocityX = (velocityX / speed) * maxSpeed;
+                    velocityY = (velocityY / speed) * maxSpeed;
+                }
+            }
+
+            // Flip fish based on direction
+            if (velocityX > 0) {
+                fish.style.transform = 'scaleX(1)';
+            } else {
+                fish.style.transform = 'scaleX(-1)';
+            }
+
+            // Apply position
+            fish.style.left = fishX + 'px';
+            fish.style.top = fishY + 'px';
+
+            animationId = requestAnimationFrame(swimFish);
+        }
+
+        // Fish 2 swimming animation
+        function swimFish2() {
+            if (!isSwimming2) return;
+
+            // Update position
+            fish2X += velocity2X;
+            fish2Y += velocity2Y;
+
+            // Bounce off walls (allow 70% hiding, keep 30% visible)
+            const fishSize = 500;
+            const visiblePortion = fishSize * 0.3; // 30% must remain visible
+            const minX = -(fishSize - visiblePortion);
+            const maxX = window.innerWidth - visiblePortion;
+            const minY = -(fishSize - visiblePortion);
+            const maxY = window.innerHeight - 80 - visiblePortion; // Account for sand
+
+            if (fish2X <= minX || fish2X >= maxX) {
+                velocity2X *= -1;
+                fish2X = Math.max(minX, Math.min(fish2X, maxX));
+            }
+
+            if (fish2Y <= minY || fish2Y >= maxY) {
+                velocity2Y *= -1;
+                fish2Y = Math.max(minY, Math.min(fish2Y, maxY));
+            }
+
+            // Random direction changes
+            if (Math.random() < 0.02) {
+                velocity2X += (Math.random() - 0.5) * 4;
+                velocity2Y += (Math.random() - 0.5) * 4;
+
+                const speed = Math.sqrt(velocity2X * velocity2X + velocity2Y * velocity2Y);
+                const maxSpeed = 15;
+                if (speed > maxSpeed) {
+                    velocity2X = (velocity2X / speed) * maxSpeed;
+                    velocity2Y = (velocity2Y / speed) * maxSpeed;
+                }
+            }
+
+            // Flip fish based on direction
+            if (velocity2X > 0) {
+                fish2.style.transform = 'scaleX(1)';
+            } else {
+                fish2.style.transform = 'scaleX(-1)';
+            }
+
+            // Apply position
+            fish2.style.left = fish2X + 'px';
+            fish2.style.top = fish2Y + 'px';
+
+            animationId2 = requestAnimationFrame(swimFish2);
+        }
+
+        // Start swimming
+        swimFish();
+        swimFish2();
+
+        // Heart 1 swimming animation
+        function swimHeart1() {
+            if (!isHeart1Swimming) return;
+
+            heart1X += heartVelocity1X;
+            heart1Y += heartVelocity1Y;
+
+            const heartSize = 600;
+            const visiblePortion = heartSize * 0.3;
+            const minX = -(heartSize - visiblePortion);
+            const maxX = window.innerWidth - visiblePortion;
+            const minY = -(heartSize - visiblePortion);
+            const maxY = window.innerHeight - visiblePortion;
+
+            if (heart1X <= minX || heart1X >= maxX) {
+                heartVelocity1X *= -1;
+                heart1X = Math.max(minX, Math.min(heart1X, maxX));
+            }
+
+            if (heart1Y <= minY || heart1Y >= maxY) {
+                heartVelocity1Y *= -1;
+                heart1Y = Math.max(minY, Math.min(heart1Y, maxY));
+            }
+
+            if (Math.random() < 0.02) {
+                heartVelocity1X += (Math.random() - 0.5) * 3;
+                heartVelocity1Y += (Math.random() - 0.5) * 3;
+
+                const speed = Math.sqrt(heartVelocity1X * heartVelocity1X + heartVelocity1Y * heartVelocity1Y);
+                const maxSpeed = 10;
+                if (speed > maxSpeed) {
+                    heartVelocity1X = (heartVelocity1X / speed) * maxSpeed;
+                    heartVelocity1Y = (heartVelocity1Y / speed) * maxSpeed;
+                }
+            }
+
+            heart1.style.left = heart1X + 'px';
+            heart1.style.top = heart1Y + 'px';
+
+            heart1AnimationId = requestAnimationFrame(swimHeart1);
+        }
+
+        // Heart 2 swimming animation
+        function swimHeart2() {
+            if (!isHeart2Swimming) return;
+
+            heart2X += heartVelocity2X;
+            heart2Y += heartVelocity2Y;
+
+            const heartSize = 600;
+            const visiblePortion = heartSize * 0.3;
+            const minX = -(heartSize - visiblePortion);
+            const maxX = window.innerWidth - visiblePortion;
+            const minY = -(heartSize - visiblePortion);
+            const maxY = window.innerHeight - visiblePortion;
+
+            if (heart2X <= minX || heart2X >= maxX) {
+                heartVelocity2X *= -1;
+                heart2X = Math.max(minX, Math.min(heart2X, maxX));
+            }
+
+            if (heart2Y <= minY || heart2Y >= maxY) {
+                heartVelocity2Y *= -1;
+                heart2Y = Math.max(minY, Math.min(heart2Y, maxY));
+            }
+
+            if (Math.random() < 0.02) {
+                heartVelocity2X += (Math.random() - 0.5) * 3;
+                heartVelocity2Y += (Math.random() - 0.5) * 3;
+
+                const speed = Math.sqrt(heartVelocity2X * heartVelocity2X + heartVelocity2Y * heartVelocity2Y);
+                const maxSpeed = 10;
+                if (speed > maxSpeed) {
+                    heartVelocity2X = (heartVelocity2X / speed) * maxSpeed;
+                    heartVelocity2Y = (heartVelocity2Y / speed) * maxSpeed;
+                }
+            }
+
+            heart2.style.left = heart2X + 'px';
+            heart2.style.top = heart2Y + 'px';
+
+            heart2AnimationId = requestAnimationFrame(swimHeart2);
+        }
+
+        // Transform to Valentine's theme
+        function transformToValentine() {
+            if (valentineTransformed) return;
+            valentineTransformed = true;
+            
+            // Switch audio from bird to romantic
+            if (isAudioPlaying) {
+                birdAudio.pause();
+                romanticAudio.play().catch(err => console.log('Romantic audio play failed:', err));
+                currentAudio = romanticAudio;
+            }
+            
+            // Stop fish swimming
+            isSwimming = false;
+            isSwimming2 = false;
+            cancelAnimationFrame(animationId);
+            cancelAnimationFrame(animationId2);
+            
+            // Hide aquarium elements
+            fish.classList.add('hidden');
+            fish2.classList.add('hidden');
+            document.getElementById('sand').classList.add('hidden');
+            document.querySelectorAll('.seaweed').forEach(sw => sw.classList.add('hidden'));
+            document.querySelectorAll('.bubble').forEach(b => b.classList.add('hidden'));
+            
+            // Change background to Valentine's theme
+            aquarium.classList.add('valentine');
+            
+            // Create floating hearts
+            function createHeart() {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = ['❤️', '💕', '💖', '💗', '💝'][Math.floor(Math.random() * 5)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDelay = Math.random() * 2 + 's';
+                heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+                aquarium.appendChild(heart);
+                
+                setTimeout(() => heart.remove(), 7000);
+            }
+            
+            // Create hearts continuously
+            for (let i = 0; i < 10; i++) {
+                setTimeout(createHeart, i * 300);
+            }
+            setInterval(createHeart, 800);
+            
+            // Show new message after transformation completes
+            setTimeout(() => {
+                message.textContent = 'Now your turn';
+                message.classList.add('show');
+                
+                // Hide message after 3 seconds and show swimming hearts
+                setTimeout(() => {
+                    message.classList.remove('show');
+                    
+                    // Show and start swimming hearts
+                    setTimeout(() => {
+                        heart1.style.left = heart1X + 'px';
+                        heart1.style.top = heart1Y + 'px';
+                        heart2.style.left = heart2X + 'px';
+                        heart2.style.top = heart2Y + 'px';
+                        
+                        heart1.classList.add('visible');
+                        heart2.classList.add('visible');
+                        
+                        isHeart1Swimming = true;
+                        isHeart2Swimming = true;
+                        swimHeart1();
+                        swimHeart2();
+                    }, 500);
+                }, 2000);
+            }, 1000);
+        }
+
+        // Click handler for fish 1
+        fish.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Don't show message if already displayed
+            if (message.classList.contains('show')) {
+                return;
+            }
+            
+            // Show message
+            message.classList.add('show');
+            
+            // Clear any existing timeout
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+            }
+            
+            // Auto-hide after 5 seconds
+            messageTimeout = setTimeout(() => {
+                message.classList.remove('show');
+                messageTimeout = null;
+                
+                // Transform to Valentine's theme after message hides
+                setTimeout(transformToValentine, 500);
+            }, 5000);
+        });
+
+        // Click handler for fish 2
+        fish2.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Don't show message if already displayed
+            if (message.classList.contains('show')) {
+                return;
+            }
+            
+            // Show message
+            message.classList.add('show');
+            
+            // Clear any existing timeout
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+            }
+            
+            // Auto-hide after 5 seconds
+            messageTimeout = setTimeout(() => {
+                message.classList.remove('show');
+                messageTimeout = null;
+                
+                // Transform to Valentine's theme after message hides
+                setTimeout(transformToValentine, 500);
+            }, 5000);
+        });
+
+        // Click handler for heart 1
+        heart1.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Don't show message if already displayed
+            if (message.classList.contains('show')) {
+                return;
+            }
+            
+            message.textContent = 'Be my Valentine';
+            message.classList.add('show');
+            // Message stays permanently - no auto-hide
+        });
+
+        // Click handler for heart 2
+        heart2.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Don't show message if already displayed
+            if (message.classList.contains('show')) {
+                return;
+            }
+            
+            message.textContent = 'Be my Valentine';
+            message.classList.add('show');
+            // Message stays permanently - no auto-hide
         });
 
         // Handle window resize
